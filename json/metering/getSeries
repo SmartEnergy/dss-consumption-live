@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "result": {
+    "series": [
+      {
+        "dsid": "3504175fe0000000ffc00013",
+        "type": "energy"
+      },
+      {
+        "dsid": "3504175fe0000000ffc00013",
+        "type": "energyDelta"
+      },
+      {
+        "dsid": "3504175fe0000000ffc00013",
+        "type": "consumption"
+      }
+    ]
+  }
+}

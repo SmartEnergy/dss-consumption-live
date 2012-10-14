@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+        <title>calibration for dss-consumption</title>
+        <link rel="stylesheet" href="default.css" type="text/css" media="screen"/>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript">
+        </script>
+        <script type="text/javascript">
+            /*
+             Smart Energy (Uni Bremen)
+             http://smartenergy.uni-bremen.de/
+             dSS Consumption
+             2011 by Philip Häusler <msquare@notrademark.de>
+             
+             Kalibrierungs-Seite (Ermittelt den effektiven Verbrauch einzelner Geräte und speichert diesen im Property-Tree)
+             */
+			
+			// (siehe index.html)
+            var chart;
+            var structure = null;
+            var token = null;
+            
+			// Hier gehts los, der Button fragt bei einem Klick nach, ob er alle Lichter ausschalten darf und legt dann mit Schritt 1: Login los.
+            $(document).ready(function(){
+                $("#container").height(getWindowSize().y - 50);
+                $("#startcalibration").click(function(event){
+                    if (confirm("Für die Calibration werden alle Lichter ausgeschaltet. Während der Calibration sollten keine Devices geändert werden und kein Schalter sollte betätigt werden. Möchten die Calibration starten?")) {
+                        $("#step_start").hide();
+                        login();
+                    }
+                });
+                $("#step_start").show();
+            });
+            
+			// Hier wird ein Login-Token organisiert, für den Fall, dass Cookies deaktiviert sind.
+            function login(){
+                $("#step_login").show();
+                $.ajax({
+                    url: '/json/system/login?user=dssadmin&password=dssadmin',
+                    success: function(data){
+                        token = data.result.token;
+                        $("#step_login").hide();
+                        collect_information();
+                    },
+                    cache: false
+                });
+            }
+            
+			// Als nächstes wird die Apartment-Struktur abgefragt und alle zu testenden Lichter (Gruppe 1) ermittelt.
+            var devices = [];
+            function collect_information(){
+                $("#step_collect").show();
+                $.ajax({
+                    url: '/json/apartment/getStructure',
+                    success: function(data){
+                        structure = data.result;
+                        
+                        for (var i = 0; i < structure.apartment.zones.length; i++) 
+                            if (structure.apartment.zones[i].id == 0) 
+                                var zone = structure.apartment.zones[i];
+                        
+                        for (var i = 0; i < zone.groups.length; i++) 
+                            if (zone.groups[i].id == 1) 
+                                var group = zone.groups[i];
+                        
+                        devices = group.devices;
+                        
+                        $("#step_collect").hide();
+                        turn_off();
+                    },
+                    cache: false
+                });
+            }
+            
+			// Das ganze Apartment dunkelschalten
+            function turn_off(){
+                $("#step_off").show();
+                $.ajax({
+                    url: '/json/apartment/turnOff?token=' + token,
+                    success: function(data){
+                        structure = data.result;
+                        $("#step_off").hide();
+                        calibrate();
+                    },
+                    cache: false
+                });
+            }
+            
+			// Jetzt wird der Reihe nach jedes Device einmal eingeschaltet, 4 Sekunden gewartet und der entstehende Gebrauch abgefragt.
+            var index = 0;
+            var dsid;
+            function calibrate(){
+                $("#step_calibrate").show();
+                if (index >= devices.length) {
+                    $("#step_calibrate").hide();
+                    done();
+                    return;
+                }
+                
+                dsid = devices[index];
+                log(dsid + ": turn on");
+                $.ajax({
+                    url: '/json/device/turnOn?dsid=' + dsid + '&token=' + token,
+                    success: function(data){
+                        window.setTimeout("calibrate_consumption()", 4000);
+                    },
+                    cache: false
+                });
+            }
+            
+			// Die ermittelten Verbrauchswerte speichern und das Licht wieder ausschalten. Nach kurzer Wartezeit mit dem näcshten Device weitermachen.
+            function calibrate_consumption(){
+                $.ajax({
+                    url: '/json/apartment/getConsumption',
+                    success: function(data){
+                        var consumption = data.result.consumption;
+                        log(dsid + ": consumes " + consumption + " W, storing...");
+                        var path = '/apartment/zones/zone0/devices/' + dsid + '/maxConsumption';
+                        $.ajax({
+                            url: '/json/property/setInteger?path=' + path + '&value=' + consumption + '&token=' + token,
+                            success: function(data){
+                                $.ajax({
+                                    url: '/json/device/turnOff?dsid=' + dsid + '&token=' + token,
+                                    success: function(data){
+                                        index++;
+                                        window.setTimeout("calibrate()", 2000);
+                                    },
+                                    cache: false
+                                });
+                            },
+                            cache: false
+                        });
+                    },
+                    cache: false
+                });
+            }
+            
+			// Zeigt dem Benutzer aktuelle Nachrichten an
+            function log(text){
+                $("#info").html(text);
+            }
+            
+			// Wenn alle Devices durch sind: Fertig
+            function done(){
+                $.ajax({
+                    url: '/json/apartment/turnOff?token=' + token,
+                    success: function(data){
+                        $("#step_done").show();
+                    },
+                    cache: false
+                });
+            }
+                        
+            // Gibt die Größe des Browser-Sichtfensters zurück.
+            function getWindowSize(){
+                if (window.self && self.innerHeight) {
+                    return {
+                        x: self.innerWidth,
+                        y: self.innerHeight
+                    };
+                }
+                if (document.documentElement && document.documentElement.clientHeight) {
+                    return {
+                        x: document.documentElement.clientHeight,
+                        y: document.documentElement.clientWidth
+                    };
+                }
+                return {
+                    x: 0,
+                    y: 0
+                };
+            }
+        </script>
+    </head>
+    <body>
+        <header>
+            <a href="index.html">Consumption &raquo;</a>
+        </header>
+        <div id="container" style="width: 100%; height: 400px">
+            <div id="step_start" class="step">
+                <h2>calibration</h2>
+                <button id="startcalibration">Start</button>
+            </div>
+            <div id="step_login" class="step active">
+                <h2>authenticate</h2>
+            </div>
+            <div id="step_collect" class="step active">
+                <h2>collecting informations</h2>
+            </div>
+            <div id="step_off" class="step active">
+                <h2>turning off all lights</h2>
+            </div>
+            <div id="step_calibrate" class="step active">
+                <h2>calibrate</h2>
+                <span id="info">asdf</span>
+            </div>
+            <div id="step_done" class="step">
+                <h2>it's done!</h2>
+            </div>
+        </div>
+    </body>
+</html>

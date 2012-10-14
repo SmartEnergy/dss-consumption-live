@@ -1,0 +1,94 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #f0f0f0;
+    font-family: 'Ubuntu', arial, serif;
+    font-size: 12px;
+    padding: 10px;
+}
+
+a {
+    color: #000;
+}
+
+#logo {
+    float: right;
+}
+
+#plot {
+    clear: both;
+}
+
+#modal {
+    background: rgba(0, 0, 0, 0.3);
+    display: none;
+    left: 0;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+.buttons {
+    padding: 10px 0;
+}
+
+.buttons a {
+    background: #fff;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+	margin-right: 5px;
+    padding: 5px 10px;
+    text-decoration: none;
+}
+
+.buttons .selected, .buttons a:active {
+    background: #f47d20;
+    border: 1px solid #de732a;
+    color: #fff;
+}
+
+.dialog {
+    background: #f0f0f0;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    box-shadow: 1px 1px 5px #555;
+    margin: 100px auto 0 auto;
+    padding: 10px;
+    text-align: center;
+    width: 300px;
+}
+
+body header {
+    display: block;
+    text-align: right;
+    width: 100%;
+}
+
+.step {
+    clear: both;
+    display: none;
+    height: 22px;
+    margin: 20px 40px;
+}
+
+.step h2 {
+    float: left;
+    width: 400px;
+}
+
+.step button {
+    border: 1px solid #090;
+    padding: 2px;
+}
+
+.step button:hover {
+    background: #fff;
+}
+
+.step.active {
+    background: url('load.gif') top right no-repeat;
+}

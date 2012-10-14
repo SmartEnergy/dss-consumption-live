@@ -1,0 +1,17 @@
+Smart Energy (Uni Bremen)
+http://smartenergy.uni-bremen.de/
+
+dSS Consumption
+2011 by Philip Häusler <msquare@notrademark.de>
+
+Benutzt:
+ * jQuery als JavaScript-Framework
+ * Highcharts für die Graphen (für private/forschende Zwecke frei verwendbar)
+
+dSS Consumption ist ein JavaScript/HTML Tool, dass den aktuellen Verbrauch in einem digitalSTROM-Apartment anzeigt.
+Dazu gibt es eine Kalibrierungs-Funktion, die den Verbrauch einzelner Verbraucher einmalig ermittelt und im digitalSTROM-Server hinterlegt.
+Diese Werte werden im Property-Tree in der zone0 zu jedem Device in "maxConsumption" gespeichert.
+
+Verzeichnis mit dem Tool in das dSS Webverzeichnis legen und dann dessen URL im Browser aufrufen.
+
+(ruft auf dem selben Host /json/... auf)
